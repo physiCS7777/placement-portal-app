@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Placement Portal Application</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    </head>
+
+    <body class="bg-light">
+
+        <div id="app" class="container mt-5">
+
+            <div v-if="!isLoggedIn" class="row justify-content-center mt-5">
+                <div class="col-md-5">
+                    <div class="card shadow border-0 overflow-hidden">
+
+                        <div v-if="!isRegistering" class="card-body p-4">
+                            <h3 class="fw-bold text-center text-dark mb-4">Campus Portal Gateway</h3>
+                            <form @submit.prevent="handleLogin">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-secondary">Username</label>
+                                    <input type="text" v-model="username" class="form-control shadow-sm" placeholder="Enter username" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-secondary">Password</label>
+                                    <input type="password" v-model="password" class="form-control shadow-sm" placeholder="••••••••" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100 fw-bold shadow-sm mt-3 py-2">
+                                    Sign In Safely
+                                </button>
+                            </form>
+                            <div class="text-center mt-4">
+                                <a href="#" @click.prevent="isRegistering = true" class="small text-primary text-decoration-none fw-semibold">
+                                    Don't have an account? Register here →
+                                </a>
+                            </div>
+                        </div>
+
+                        <div v-else class="card-body p-4">
+                            <h3 class="fw-bold text-center text-success mb-4">Create Fresh Account</h3>
+                            <form @submit.prevent="registerUser">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-secondary">Choose Username</label>
+                                    <input type="text" v-model="regUsername" class="form-control shadow-sm" placeholder="e.g., student_prime" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-secondary">Secure Password</label>
+                                    <input type="password" v-model="regPassword" class="form-control shadow-sm" placeholder="Minimum characters" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-secondary">Identify Your System Role</label>
+                                    <select v-model="regRole" class="form-select shadow-sm fw-medium">
+                                        <option value="student">Student Profile</option>
+                                        <option value="company">Recruitment Corporate Partner</option>
+                                    </select>
+                                </div>
+
+                                <div v-if="regRole === 'student'" class="mt-3 p-3 bg-light rounded border shadow-sm mb-3 animate__animated animate__fadeIn">
+                                    <h6 class="fw-bold text-dark mb-3">🎓 Academic Profile Setup</h6>
+                                    
+                                    <div class="mb-2">
+                                        <label class="form-label small fw-bold text-secondary">Full Name</label>
+                                        <input v-model="regFullName" type="text" class="form-control form-control-sm" placeholder="e.g., Rameezul Haque" required>
+                                    </div>
+                                    
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <label class="form-label small fw-bold text-secondary">Initial CGPA</label>
+                                            <input v-model="regCgpa" type="number" step="0.01" min="0" max="10" class="form-control form-control-sm" placeholder="e.g., 8.50" required>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small fw-bold text-secondary">Major Stream</label>
+                                            <select v-model="regStream" class="form-select form-select-sm fw-medium">
+                                                <option value="Data Science">Data Science</option>
+                                                <option value="Computer Science">Computer Science</option>
+                                                <option value="Applications">Applications</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-12 mt-2 pt-2 border-top">
+                                            <label class="form-label small fw-bold text-secondary">💼 Professional Resume Document (PDF Format Only)</label>
+                                            <input type="file" @change="uploadResume" class="form-control form-control-sm" accept=".pdf">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-success w-100 fw-bold shadow-sm mt-3 py-2">
+                                    Finalize Account Signup
+                                </button>
+                            </form>
+                            <div class="text-center mt-4">
+                                <a href="#" @click.prevent="isRegistering = false" class="small text-secondary text-decoration-none fw-semibold">
+                                    ← Already have an account? Login here
+                                </a>
+                            </div>
+                        </div>
+
+                        <div v-if="errorMessage" class="card-footer bg-danger-subtle text-danger border-0 text-center py-2 small fw-semibold">
+                            [[ errorMessage ]]
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="isLoggedIn" class="row">
+
+                <div v-if="userRole === 'admin'" class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2>Admin Workspace</h2>
+                        <button @click="logout" class="btn btn-danger">Logout</button>
+                    </div>
+
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-body py-2.5">
+                            <h6 class="text-success mb-0 fw-semibold">⚡ System Status: [[ dashboardMessage ]]</h6>
+                        </div> 
+                    </div>
+
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-4">
+                            <div class="card border-0 shadow-sm bg-primary text-white p-4 h-100">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <h6 class="text-uppercase mb-1 small fw-bold tracking-wider opacity-75">Total Students</h6>
+                                        <h2 class="display-6 fw-bold mb-0">[[ adminStats.students ]]</h2>
+                                    </div>
+                                    <div class="fs-1 opacity-50">🎓</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card border-0 shadow-sm bg-success text-white p-4 h-100">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <h6 class="text-uppercase mb-1 small fw-bold tracking-wider opacity-75">Total Companies</h6>
+                                        <h2 class="display-6 fw-bold mb-0">[[ adminStats.companies ]]</h2>
+                                    </div>
+                                    <div class="fs-1 opacity-50">🏢</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card border-0 shadow-sm bg-dark text-white p-4 h-100">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <h6 class="text-uppercase mb-1 small fw-bold tracking-wider opacity-75">Placement Campaigns</h6>
+                                        <h2 class="display-6 fw-bold mb-0">[[ adminStats.drives ]]</h2>
+                                    </div>
+                                    <div class="fs-1 opacity-50">💼</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0">Manage Company Registrations</h5>
+                        </div>
+                        <div class="card-body">
+                            <div v-if="companies.length === 0" class="text-muted">No companies registered yet.</div>
+
+                            <table v-else class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Company Name</th>
+                                        <th>Industry</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="company in companies" :key="company.id">
+                                        <td><strong>[[ company.name ]]</strong></td>
+                                        <td><span class="badge bg-secondary">[[ company.industry ]]</span></td>
+                                        <td>
+                                            <span :class="{
+                                            'badge bg-warning text-dark': company.status === 'Pending',
+                                            'badge bg-success': company.status === 'Approved',
+                                            'badge bg-danger': company.status === 'Rejected'
+                                            }">[[ company.status ]]</span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex gap-2 align-items-center">
+                                                <div v-if="company.status === 'Pending'" class="d-inline-block">
+                                                    <button @click="adminUpdateCompanyStatus(company.id, 'Approved')" class="btn btn-sm btn-success me-1">Approve</button>
+                                                    <button @click="adminUpdateCompanyStatus(company.id, 'Rejected')" class="btn btn-sm btn-danger">Reject</button>
+                                                </div>
+                                                <button 
+                                                    @click="toggleCompanyDeactivation(company.id)" 
+                                                    :class="company.is_blacklisted ? 'btn btn-sm btn-success px-2' : 'btn btn-sm btn-outline-danger px-2'">
+                                                    [[ company.is_blacklisted ? '⚡ Reactivate' : '🔒 Deactivate' ]]
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-dark text-white py-3">
+                            <h5 class="mb-0 fw-bold">📋 Review Incoming Campus Placement Drives</h5>
+                        </div>
+                        <div class="card-body">
+                            <div v-if="adminDrives.length === 0" class="text-center text-muted py-4">
+                                No placement drives have been submitted for review yet.
+                            </div>
+                            <div v-else class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Company Name</th>
+                                            <th>Job Title</th>
+                                            <th>Compensation (CTC)</th>
+                                            <th>Application Deadline</th>
+                                            <th>Status</th>
+                                            <th class="text-end">Administrative Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="drive in adminDrives" :key="drive.id">
+                                            <td><strong class="text-primary">[[ drive.company_name ]]</strong></td>
+                                            <td>[[ drive.title ]]</td>
+                                            <td><span class="badge bg-light text-dark border">[[ drive.ctc ]]</span></td>
+                                            <td><small class="text-muted">[[ drive.deadline ]]</small></td>
+                                            <td>
+                                                <span v-if="drive.status === 'Pending'" class="badge bg-warning text-dark text-uppercase">Pending Review</span>
+                                                <span v-else-if="drive.status === 'Approved'" class="badge bg-success text-uppercase">Active / Approved</span>
+                                                <span v-else class="badge bg-danger text-uppercase" >[[ drive.status ]]</span>
+                                            </td>
+                                            <td class="text-end">
+                                                <div v-if="drive.status === 'Pending'" class="d-flex justify-content-end gap-2">
+                                                    <button @click="updateAdminDriveStatus(drive.id, 'Approved')" class="btn btn-success btn-sm px-3">
+                                                        Approve Campaign
+                                                    </button>
+                                                    <button @click="updateAdminDriveStatus(drive.id, 'Rejected')" class="btn btn-outline-danger btn-sm">
+                                                        Reject
+                                                    </button>
+                                                </div>
+                                                <div v-else class="text-muted small px-3">
+                                                    Decision Finalized
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm mt-4">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0 fw-bold text-dark">🎓 Monitor Registered Student Accounts</h5>
+                        </div>
+                        <div class="card-body">
+                            <div v-if="adminStudents.length === 0" class="text-center text-muted py-4">
+                                No student accounts are currently registered in the database system.
+                            </div>
+                            <div v-else class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Username</th>
+                                            <th>Full Name</th>
+                                            <th>Academic Major / Stream</th>
+                                            <th>Recorded CGPA</th>
+                                            <th>Account Status</th>
+                                            <th class="text-end">Account Management</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="student in adminStudents" :key="student.id">
+                                            <td><code class="text-secondary">[[ student.username ]]</code></td>
+                                            <td><strong>[[ student.name ]]</strong></td>
+                                            <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-medium">[[ student.stream ]]</span></td>
+                                            <td><strong class="text-dark">[[ student.cgpa ]] / 10.0</strong></td>
+                                            <td>
+                                                <span :class="student.is_blacklisted ? 'badge bg-danger text-uppercase' : 'badge bg-success text-uppercase'">
+                                                    [[ student.is_blacklisted ? 'Deactivated' : 'Active / Safe' ]]
+                                                </span>
+                                            </td>
+                                            <td class="text-end">
+                                                <button 
+                                                    @click="toggleStudentDeactivation(student.id)" 
+                                                    :class="student.is_blacklisted ? 'btn btn-sm btn-success px-3 fw-semibold' : 'btn btn-sm btn-outline-danger px-3 fw-semibold'">
+                                                    [[ student.is_blacklisted ? '🔓 Reactivate' : '🛑 Freeze Account' ]]
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div v-if="userRole === 'company' && companyProfile" class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h2 class="mb-0">Welcome, [[ companyProfile.name ]] </h2>
+                            <span class="badge bg-secondary mt-1"> [[ companyProfile.industry ]] Workspace</span>
+                        </div>
+                        <button @click="logout" class="btn btn-danger">Logout</button>
+                    </div>
+
+                    <div class="card shadow-sm mb-4" :class="{
+                        'border-warning bg-warning bg-opacity-10 text-dark': companyProfile.status === 'Pending',
+                        'border-success bg-success bg-opacity-10 text-dark': companyProfile.status === 'Approved',
+                        'border-danger bg-danger bg-opacity-10 text-dark': companyProfile.status === 'Rejected'
+                    }">
+                        <div class="card-body"> 
+                            <h5 class="fw-bold mb-1"> 
+                                Account Clearance: 
+                                <span :class="{
+                                    'text-warning-emphasis': companyProfile.status === 'Pending',
+                                    'text-success fw-bold': companyProfile.status === 'Approved',
+                                    'text-danger fw-bold': companyProfile.status === 'Rejected'
+                                }">[[ companyProfile.status ]]</span>
+                            </h5>
+                            <p v-if="companyProfile.status === 'Pending'" class="mb-0 text-muted small">
+                                Your institutional registration is currently awaiting validation from administration. Placement campaign tools will unlock instantly upon approval.
+                            </p>
+                            <p v-else-if="companyProfile.status === 'Approved'" class="mb-0 text-muted small">
+                                Your account is fully verified. You are authorized to construct and launch campus placement drives.
+                            </p>
+                            <p v-else class="mb-0 text-muted small">
+                                Your profile registration access has been restricted by administration. Please contact the placement cell.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div v-if="companyProfile.status === 'Approved'" class="card shadow-sm mb-4">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0 fw-bold text-dark">
+                                [[ isEditingDrive ? '✏️ Edit Recruitment Campaign' : '🚀 Create a New Placement Drive' ]]
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form @submit.prevent="isEditingDrive ? saveDriveChanges() : createDrive()">
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small text-secondary">Job Title</label>
+                                    <input v-model="newDrive.title" type="text" class="form-control" placeholder="e.g. SDE Intern, Data Analyst" required />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small text-secondary">Job Description</label>
+                                    <textarea v-model="newDrive.description" class="form-control" placeholder="Provide core responsibilities, skill expectations, and technology stack details..." rows="3" required></textarea>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small text-secondary">Package / CTC</label>
+                                    <textarea v-model="newDrive.ctc" class="form-control" placeholder="e.g. 12 LPA, 50,000 / month" rows="1" required></textarea>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small text-secondary">Target Academic Major Stream</label>
+                                    <select v-model="newDrive.allowed_stream" class="form-select" required>
+                                        <option value="All Streams">All Streams (Open to Everyone)</option>
+                                        <option value="Data Science">Data Science Only</option>
+                                        <option value="Computer Science">Computer Science Only</option>
+                                        <option value="Applications">Applications Only</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small text-secondary">Application Deadline</label>
+                                    <input v-model="newDrive.deadline" type="date" class="form-control" required />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small text-secondary">Minimum CGPA Cutoff Criteria</label>
+                                    <input v-model="newDrive.min_cgpa" type="number" step="0.01" min="0.00" max="10.00" class="form-control" placeholder="e.g. 7.50, 8.00" required />
+                                </div>
+                                
+                                <div class="d-flex gap-2 mt-4">
+                                    <button v-if="!isEditingDrive" type="submit" class="btn btn-primary fw-bold px-4 shadow-sm">
+                                        Submit Placement Drive
+                                    </button>
+                                    
+                                    <template v-else>
+                                        <button type="submit" class="btn btn-success fw-bold px-4 shadow-sm">
+                                            💾 Save Modified Details
+                                        </button>
+                                        <button type="button" 
+                                                @click="isEditingDrive = false; newDrive = {title:'', description:'', ctc:'', deadline:''}" 
+                                                class="btn btn-outline-secondary fw-bold px-3">
+                                            Cancel
+                                        </button>
+                                    </template>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0">Your Recruitment Campaigns</h5>
+                        </div>
+                        <div class="card-body">
+                            <div v-if="drives.length === 0" class="text-muted small py-2">No placement drives drafted or submitted yet.</div>
+
+                            <table v-else class="table table-hover align middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Drive Title</th>
+                                        <th>Compensation Package</th>
+                                        <th>Deadline Date</th>
+                                        <th>Verification State</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="drive in drives" :key="drive.id">
+                                        <td><strong>[[ drive.title ]]</strong></td>
+                                        <td><span class="badge bg-light text-dark border">[[ drive.ctc ]]</span></td>
+                                        <td><span class="text-muted small">[[ drive.deadline ]]</span></td>
+                                        <td>
+                                            <span :class="{
+                                                'badge bg-warning text-dark': drive.status === 'Pending',
+                                                'badge bg-success': drive.status === 'Approved',
+                                                'badge bg-danger': drive.status === 'Rejected'
+                                            }">[[ drive.status ]]</span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex gap-1">
+                                                <button @click="prepareEditDrive(drive)" class="btn btn-sm btn-outline-primary px-2 py-1 fw-semibold">
+                                                    ✏️ Edit
+                                                </button>
+                                                <button 
+                                                    @click="deleteDrive(drive.id)" 
+                                                    class="btn btn-sm btn-outline-danger px-2 py-1 fw-semibold shadow-sm">
+                                                    🗑️ Delete
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm mt-4">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0 fw-bold text-dark">📋 Incoming Student Applications</h5>
+                        </div>
+                        <div class="card-body">
+                            <div v-if="applications.length === 0" class="text-muted small py-3 text-center">
+                                No students have applied to your active campaigns yet.
+                            </div>
+
+                            <div v-else class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Applicant Username</th>
+                                            <th>Target Position</th>
+                                            <th>Applied Timestamp</th>
+                                            <th>Application Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="app in applications" :key="app.id">
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <span class="fw-semibold text-secondary">
+                                                        🎓 [[ app.student_username ]]
+                                                    </span>
+                                                    
+                                                    <a :href="'http://127.0.0.1:5000/api/student/resume/view/' + app.student_id" 
+                                                    target="_blank" 
+                                                    class="badge bg-primary-subtle text-primary border border-primary-subtle text-decoration-none ms-2 fw-semibold px-2 py-1 shadow-sm">
+                                                        📄 Resume ↗
+                                                    </a>
+                                                </div>
+                                            </td>
+                                            <td><strong>[[ app.role_title ]]</strong></td>
+                                            <td><span class="text-muted small">[[ app.applied_date ]]</span></td>
+                                            <td>
+                                                <span :class="{
+                                                    'badge bg-info-subtle text-info border border-info-subtle': app.status === 'Applied',
+                                                    'badge bg-success-subtle text-success border border-success-subtle': app.status === 'Shortlisted' || app.status === 'Selected',
+                                                    'badge bg-danger-subtle text-danger border border-danger-subtle': app.status === 'Rejected'
+                                                }" class="px-2 py-1 rounded-pill fw-medium">
+                                                    [[ app.status ]]
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <div v-if="app.status === 'Applied'" class="d-flex gap-2">
+                                                    <button 
+                                                        @click="updateStatus(app.id, 'Shortlisted')" 
+                                                        class="btn btn-sm btn-success px-3 fw-semibold shadow-sm">
+                                                        Shortlist
+                                                    </button>
+                                                    <button 
+                                                        @click="updateStatus(app.id, 'Rejected')" 
+                                                        class="btn btn-sm btn-outline-danger px-3 fw-semibold">
+                                                        Reject
+                                                    </button>
+                                                </div>
+                                                <div v-else class="text-muted small italic">
+                                                    Decision logged
+                                                </div>
+                                            </td>                                            
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="userRole === 'student'" class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pt-3">
+                        <div>
+                            <h2 class="fw-bold text-dark mb-1">🎓 Student Placement Workspace</h2>
+                        </div>
+                        <button @click="logout" class="btn btn-outline-danger btn-sm px-3 shadow-sm">
+                            Secure Logout
+                        </button>
+                        <button @click="triggerHistoryExport" class="btn btn-sm btn-dark mt-2 mb-3 fw-semibold shadow-sm">
+                            📥 Export My Application History (Async CSV)
+                        </button>
+                    </div>
+
+                    <div class="card bg-dark text-white shadow-sm mb-4 border-0">
+                        <div class="card-body p-4 d-flex align-items-center justify-content-between">
+                            <div>
+                                <span class="badge bg-primary mb-2 px-2 py-1 fw-bold text-uppercase tracking-wider">Verified Student</span>
+                                <h3 class="fw-bold mb-1 text-white">[[ profileName || 'Complete Your Profile Name' ]]</h3>
+                                <p class="text-white-50 small mb-0 d-flex align-items-center gap-3">
+                                    <span>📂 Major Stream: <strong>[[ profileStream || 'Not Set' ]]</strong></span>
+                                    <span>•</span>
+                                    <span>⭐ Cumulative CGPA: <strong>[[ profileCgpa || '0.00' ]]</strong></span>
+                                </p>
+                            </div>
+                            <div class="text-end d-none d-md-block">
+                                <h1 class="display-6 opacity-25 m-0 font-monospace">IITM</h1>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm mb-4 border-0 bg-white">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold text-dark mb-3">⚙️ Academic Profile & Resume Settings</h5>
+                            
+                            <form @submit.prevent="updateProfile" class="row g-3 align-items-end">
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold text-secondary">Full Name</label>
+                                    <input type="text" v-model="profileName" class="form-control form-control-sm" placeholder="e.g. Rameezul Haque">
+                                </div>
+                                
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold text-secondary">Current CGPA</label>
+                                    <input type="number" step="0.01" min="0" max="10" v-model="profileCgpa" class="form-control form-control-sm" placeholder="e.g. 7.50">
+                                </div>
+                                
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold text-secondary">Academic Major Stream</label>
+                                    <select v-model="profileStream" class="form-select form-select-sm fw-medium">
+                                        <option value="Data Science">Data Science</option>
+                                        <option value="Computer Science">Computer Science</option>
+                                        <option value="Applications">Applications</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-2">
+                                    <button type="submit" class="btn btn-sm btn-dark w-100 fw-semibold shadow-sm">
+                                        Save Changes
+                                    </button>
+                                </div>
+
+                                <div class="col-12 mt-3 pt-3 border-top">
+                                    <label class="form-label small fw-bold text-secondary d-block mb-2">
+                                        💼 Professional Resume Document (PDF Format Only)
+                                    </label>
+                                    <div class="input-group input-group-sm max-width-md">
+                                        <input type="file" @change="uploadResume" class="form-control" accept=".pdf">
+                                        <span class="input-group-text bg-light text-muted small">Only PDFs accepted</span>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                                        
+                    <div class="card shadow-sm mb-4 border-0 bg-white">
+                        <div class="card-body p-4">
+                            <h4 class="fw-bold text-dark mb-3">Your Sent Applications & Interview Portal</h4>
+                            
+                            <div v-if="myApplications.length === 0" class="text-muted small py-2">
+                                You haven't submitted any applications yet. Browse the openings below to get started!
+                            </div>
+                            
+                            <div v-else class="row g-3">
+                                <div v-for="app in myApplications" :key="app.id" class="col-12 border rounded p-3 d-flex justify-content-between align-items-center bg-light-subtle">
+                                    <div>
+                                        <h6 class="mb-1 fw-bold text-dark">[[ app.drive_title ]]</h6>
+                                        <small class="text-muted">Company: [[ app.company_name ]]</small>
+                                    </div>
+                                    
+                                    <div class="d-flex align-items-center gap-3">
+                                        <span :class="{
+                                            'badge bg-info text-white px-3 py-2': app.status === 'Applied',
+                                            'badge bg-success px-3 py-2': app.status === 'Shortlisted',
+                                            'badge bg-danger px-3 py-2': app.status === 'Rejected'
+                                        }" class="rounded fw-medium">
+                                            [[ app.status ]]
+                                        </span>
+                                        
+                                        <a v-if="app.interview_link" 
+                                        :href="app.interview_link" 
+                                        target="_blank" 
+                                        class="btn btn-sm btn-primary fw-semibold px-3 shadow-sm">
+                                            🎥 Join Interview Room
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+
+                    <div v-if="studentDrives.length === 0" class="card shadow-sm text-center p-5 mt-4">
+                        <div class="card-body">
+                            <h4 class="text-muted fw-bold">No Active Openings Yet</h4>
+                            <p class="text-secondary small max-width-400 mx-auto">
+                                There are currently no approved placement campaigns running on campus. Check back later once administrators clear pending applications!
+                            </p>
+                        </div>
+                    </div>
+
+                    <div v-else class="row g-4 mt-2">
+                        <div v-for="drive in studentDrives" :key="drive.id" class="col-md-6 col-lg-4">
+                            <div class="card h-100 shadow-sm border-0 bg-white">
+                                <div class="card-body d-flex flex-column p-4">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <div>
+                                            <h5 class="fw-bold text-primary mb-0">[[ drive.company_name ]]</h5>
+                                            <small class="text-muted uppercase tracking-wider fs-7">[[ drive.industry ]]</small>
+                                        </div>
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 fw-semibold">
+                                            [[ drive.ctc ]]
+                                        </span>
+                                    </div>
+
+                                    <h4 class="card-title fw-bold text-dark mb-2">[[ drive.title ]]</h4>
+                                    <p class="card-text text-secondary small flex-grow-1 line-clamp-3">
+                                        [[ drive.description ]]
+                                    </p>
+
+                                    <div class="d-flex gap-3 mb-2">
+                                        <div>
+                                            <small class="text-muted d-block fs-7 mb-1">Eligible Streams</small>
+                                            <span :class="{
+                                                'badge bg-primary-subtle text-primary border border-primary-subtle fw-semibold px-2 py-1': drive.allowed_stream !== 'All Streams',
+                                                'badge bg-light text-dark border fw-semibold px-2 py-1': drive.allowed_stream === 'All Streams'
+                                            }">
+                                                [[ drive.allowed_stream ]]
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted d-block fs-7 mb-1">Min CGPA</small>
+                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle fw-semibold px-2 py-1">
+                                                [[ drive.min_cgpa ]] / 10.0
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="border-top pt-3 mt-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <small class="text-muted d-block fs-7">Application Deadline</small>
+                                                <strong class="text-danger small">[[ drive.deadline ]]</strong>
+                                            </div>
+                                            <button 
+                                                @click="applyToDrive(drive.id)"
+                                                class="btn btn-primary btn-sm px-4 fw-semibold shadow-sm">
+                                                Apply Now
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div> <div v-if="userRole === 'company' && !companyProfile" class="col-12 text-center mt-5">
+                    <div class="card shadow-sm p-4 mx-auto" style="max-width: 500px;">
+                        <div class="card-body">
+                            <h4 class="text-danger fw-bold mb-3">Workspace Sync Issue</h4>
+                            <p class="text-muted small">[[ errorMessage || 'Connecting to data channels...' ]]</p>
+                            <div class="d-flex justify-content-center gap-2 mt-4">
+                                <button @click="logout" class="btn btn-outline-danger btn-sm">Return to Login</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <script>
+            const { createApp } = Vue;
+
+            createApp({
+                compilerOptions: {
+                    delimiters: ['[[', ']]']
+                },
+
+                data() {
+                    return {
+                        // ==========================================
+                        // 🔐 AUTHENTICATION & CORE STATE
+                        // ==========================================
+                        username: '',
+                        password: '',
+                        errorMessage: '',
+                        isLoggedIn: false,
+                        userRole: '',
+                        dashboardMessage: 'Loading dashboard...',
+
+                        // ==========================================
+                        // 📝 USER SIGNUP & ONBOARDING STATE
+                        // ==========================================
+                        isRegistering: false,  // Toggles between Login and Signup forms
+                        regUsername: '',       // New account username
+                        regPassword: '',       // New account password
+                        regRole: 'student',    // 'student' or 'company'
+                        regFullName: '',       // Full name for profile onboarding
+                        regCgpa: '',           // CGPA for profile onboarding
+                        regStream: 'Data Science', // Default stream for onboarding
+
+                        // ==========================================
+                        // 🏢 COMPANY VIEW STATE
+                        // ==========================================
+                        companyProfile: null,  // Name, industry, verification status
+                        companies: [],         // Global list of company profiles
+                        drives: [],            // Placement drives posted by THIS logged-in company
+                        newDrive: {            // Form state for creating/updating a drive
+                            title: '',
+                            description: '',
+                            ctc: '',
+                            deadline: '',
+                            allowed_stream: 'All Streams', 
+                            min_cgpa: ''                  
+                        },
+                        isEditingDrive: false,
+                        editingDriveId: null,
+
+                        // ==========================================
+                        // 👑 ADMIN VIEW STATE
+                        // ==========================================
+                        adminDrives: [],       // All global drives waiting for approval/rejection,
+                        adminStudents: [],
+                        adminStats: {
+                            students: 0,
+                            companies: 0,
+                            drives: 0
+                        },
+
+                        // ==========================================
+                        // 🎓 STUDENT VIEW STATE
+                        // ==========================================
+                        studentTab: 'profile', // Active viewport tab: 'profile', 'drives', or 'applications'
+                        studentDrives: [],     // List of active drives open for applications
+                        applications: [],      // Global applications tracker
+                        myApplications: [],    // The individual student's historical applications list
+                        
+                        // Student Profile Management Panel fields
+                        profileName: '',
+                        profileCgpa: '',
+                        profileStream: 'Data Science' 
+                    }
+                },
+                
+                mounted() {
+                    this.checkLoginStatus();
+
+                    const token = localStorage.getItem('token');
+                    const role = localStorage.getItem('role'); 
+
+                    if (token && (role === 'student' || this.userRole === 'student')) {
+                        this.fetchStudentProfile();
+                        this.fetchStudentApplications();
+                    }
+                },
+                methods: {
+                    checkLoginStatus(){
+                        const token = localStorage.getItem('token');
+                        const role = localStorage.getItem('role'); 
+                        if (token && role === 'admin'){
+                            this.isLoggedIn = true;
+                            this.userRole = role;
+
+                            this.fetchDashboardData();
+                            this.fetchCompanies();
+                        }                        
+                    },
+
+                    async handleLogin() {
+                        try {
+                            const response = await fetch('/api/login',{
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json'},
+                                body: JSON.stringify({
+                                    username: this.username,
+                                    password: this.password
+                                })
+                            });
+
+                            const data = await response.json();
+
+                            if (response.ok) {
+                                const freshToken = data.token;
+                                const freshRole = data.role;
+
+                                localStorage.setItem('token', data.token);
+                                localStorage.setItem('role', data.role);
+
+                                this.isLoggedIn = true;
+                                this.userRole = freshRole;
+
+                                if (freshRole === 'admin'){
+                                    this.loadInitialDashboard(freshToken);
+                                } else if (freshRole === 'company') {
+                                    this.fetchCompanyDashboard(freshToken);
+                                    this.fetchCompanyApplications();
+                                } else if (freshRole === 'student') {
+                                    this.fetchStudentDrives(freshToken);
+                                    this.fetchStudentApplications();
+                                    this.fetchStudentProfile(freshToken);
+                                }
+                            } else {
+                                this.errorMessage = data.message || data.msg;
+                            }
+                        } catch (error) {
+                            this.errorMessage = "Could not connect to the server.";
+                        }
+                    },
+
+                    async loadInitialDashboard(token) {
+                        await this.fetchDashboardDataDirect(token);
+                        await this.fetchCompaniesDirect(token);
+                        await this.fetchAdminDrives(token);
+                        await this.fetchAdminStats();     
+                        await this.fetchAdminStudents();  
+                    },
+                    async fetchDashboardDataDirect(token) {
+                        const activeToken = token || localStorage.getItem('token');
+                        try {
+                            const response = await fetch('/api/admin/dashboard', {
+                                method: 'GET',
+                                headers: { 'Authorization': `Bearer ${activeToken}` }
+                            });
+
+                            const data = await response.json();
+                            if (response.ok) {
+                                this.dashboardMessage = data.message;
+                            } else {
+                                this.logout(); 
+                            }
+                        } catch (error) {
+                            console.error("Admin dashboard fetch crashed:", error);
+                            this.dashboardMessage = "Failed to load secure data."; 
+                        }
+                    },
+                    async fetchCompaniesDirect(token){
+                        try {
+                            const response = await fetch('/api/admin/companies', {
+                                headers: { 'Authorization': 'Bearer ' + token }
+                            });
+
+                            if (response.ok) {
+                                const actualData = await response.json();
+                                this.companies = actualData.companies;
+                            }
+                        } catch (error) {
+                            console.error("Network crash while fetching companies:", error);
+                        }
+                    },
+
+                    async fetchDashboardData() {
+                        const token = localStorage.getItem('token');
+                        this.fetchDashboardDataDirect(token);
+                    },
+
+                    async fetchCompanies(){
+                        const token = localStorage.getItem('token');
+                        this.fetchCompaniesDirect(token);
+                    },
+
+                    async adminUpdateCompanyStatus(companyId, newStatus) {
+                        try {
+                            const response = await fetch('/api/admin/companies/' + companyId + '/status', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                                },
+                                body: JSON.stringify({  status: newStatus  })
+                            });            
+
+                            if (response.ok){
+                                this.fetchCompanies();
+                            }
+                        } catch (error) {
+                            console.error("Error updating status:", error);
+                        }
+                    },
+
+                    async fetchAdminStudents() {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        try {
+                            const response = await fetch('/api/admin/students', {
+                                method: 'GET',
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                            
+                            if (response.ok) {
+                                this.adminStudents = await response.json();
+                            }
+                        } catch (error) {
+                            console.error("Error loading students list:", error);
+                        }
+                    },
+
+                    logout() {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('role');
+                        this.isLoggedIn = false;
+                        this.username = '';
+                        this.password = '';
+                        this.companies = [];
+                    },
+
+                    // 🛡️ RE-ENGINEERED STRATEGIC SPLIT DISCRETE BLACKLIST PIPELINES
+                    async toggleCompanyDeactivation(companyId) {
+                        const token = localStorage.getItem('token');
+                        try {
+                            const response = await fetch(`/api/admin/companies/${companyId}/toggle-blacklist`, {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                            const data = await response.json();
+                            alert(data.message);
+                            
+                            if (response.ok) {
+                                // ⚡ Local State Hot-Swap: Flip the text instantly in UI
+                                const target = this.companies.find(c => c.id === companyId);
+                                if (target) {
+                                    target.is_blacklisted = !target.is_blacklisted;
+                                }
+                            }
+                        } catch (error) {
+                            console.error("Error toggling company:", error);
+                        }
+                    },
+
+                    async toggleStudentDeactivation(studentId) {
+                        const token = localStorage.getItem('token');
+                        try {
+                            const response = await fetch(`/api/admin/students/${studentId}/toggle-blacklist`, {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                            const data = await response.json();
+                            alert(data.message);
+                            
+                            if (response.ok) {
+                                // ⚡ Local State Hot-Swap: Flip the badge text instantly in UI
+                                const target = this.adminStudents.find(s => s.id === studentId);
+                                if (target) {
+                                    target.is_blacklisted = !target.is_blacklisted;
+                                }
+                            }
+                        } catch (error) {
+                            console.error("Error toggling student:", error);
+                        }
+                    },
+
+                    async fetchCompanyDashboard(token) {
+                        const activeToken = token || localStorage.getItem('token');
+                        try {
+                            const response = await fetch('/api/company/dashboard', {
+                                method: 'GET',
+                                headers: {'Authorization': `Bearer ${activeToken}` }
+                            });
+                            if (response.ok) {
+                                const data = await response.json();
+                                this.companyProfile = data.profile;
+                                this.drives = data.drives;
+                            } else {
+                                const errorData = await response.json().catch(() => ({}));
+                                this.errorMessage = errorData.message || "Session unauthorized. Please log in again.";
+                            }
+                        } catch (error) {
+                            console.error("Error fetching company dashboard:", error);
+                            this.errorMessage = "Failed to load dashboard data.";
+                        }
+                    },
+
+                    async createDrive(){
+                        const token = localStorage.getItem('token');
+                        try {
+                            const response = await fetch('/api/company/drives', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-type': 'application/json',
+                                    'Authorization': `Bearer ${token}`
+                                },
+                                body: JSON.stringify(this.newDrive)
+                            });
+
+                            const data = await response.json();
+                            alert(data.message);
+                            
+                            if (response.ok) {
+                                this.newDrive = { title: '', description: '', ctc: '', deadline: '', allowed_stream: 'All Streams', min_cgpa: '' };
+                                this.fetchCompanyDashboard();
+                            }
+                        } catch (error) {
+                            console.error("Error creating drive:", error)
+                        }
+                    },
+
+                    async fetchAdminDrives(token) {
+                        const activeToken = token || localStorage.getItem('token');
+                        try {
+                            const response = await fetch('/api/admin/drives', {
+                            method: 'GET',
+                            headers: { 'Authorization': `Bearer ${activeToken}` }
+                            });
+                            const data = await response.json();
+                            if (response.ok) {
+                                this.adminDrives = data;
+                            }
+                        } catch (error) {
+                            console.error("Error fetching admin drives:", error);
+                        }
+                    },
+
+                    async updateAdminDriveStatus(driveId, newStatus) {
+                        if (!driveId) return;
+                        const formattedStatus = newStatus.charAt(0).toUpperCase() + newStatus.slice(1).toLowerCase();
+                        const token = localStorage.getItem('token');
+                        try {
+                            const response = await fetch('/api/admin/drives/' + driveId + '/status', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${token}`
+                                },
+                                body: JSON.stringify({ status: formattedStatus })
+                            });
+                            
+                            const data = await response.json();
+                            alert(data.message);
+                            if (response.ok) {
+                                this.fetchAdminDrives(token);
+                            }
+                        } catch (error) {
+                            console.error("Error updating drive status:", error);
+                        }
+                    },
+
+                    async fetchAdminStats() {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+                        try {
+                            const response = await fetch('/api/admin/stats', {
+                                method: 'GET',
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                            if (response.ok) {
+                                const data = await response.json();
+                                this.adminStats.students = data.total_students;
+                                this.adminStats.companies = data.total_companies;
+                                this.adminStats.drives = data.total_drives;
+                            }
+                        } catch (error) {
+                            console.error("Error fetching admin statistics:", error);
+                        }
+                    },
+
+                    async fetchStudentDrives(token) {
+                        const activeToken = token || localStorage.getItem('token');
+                        try {
+                            const response = await fetch('/api/student/drives', {
+                                method: 'GET',
+                                headers: { 'Authorization': `Bearer ${activeToken}` }
+                            });
+        
+                            const data = await response.json();
+                            if (response.ok) {
+                                this.studentDrives = data;
+                            }
+                        } catch (error) {
+                            console.error("Error collecting student jobs feed:", error);
+                        }
+                    },
+
+                    async registerUser() {
+                        this.errorMessage = '';
+                        try {
+                            const response = await fetch('/api/register', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    username: this.regUsername,
+                                    password: this.regPassword,
+                                    role: this.regRole,
+                                    full_name: this.regFullName,
+                                    cgpa: this.regCgpa,
+                                    stream: this.regStream
+                                })
+                            });
+
+                            const data = await response.json();
+
+                            if (response.ok) {
+                                alert(data.message);
+                                this.regUsername = '';
+                                this.regPassword = '';
+                                this.isRegistering = false;
+                            } else {
+                                this.errorMessage = data.message || "Registration failed.";
+                            }
+                        } catch (error) {
+                            console.error("Error during registration:", error);
+                            this.errorMessage = "Could not connect to the registration gateway.";
+                        }
+                    },
+
+                    applyToDrive(driveId){
+                        const token = localStorage.getItem('token');
+                        if (!token) {
+                            alert("Session expired. Please log in again.");
+                            return;
+                        }
+
+                        fetch(`http://127.0.0.1:5000/api/student/apply/${driveId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            }
+                        })
+                        .then(response => response.json().then(data => {
+                            if (!response.ok) throw new Error(data.message || 'Something went wrong.');
+                            return data;
+                        }))
+                        .then(data => {
+                            alert(data.message);
+                        })
+                        .catch(error => {
+                            console.error("Application Error:", error);
+                            alert(error.message)
+                        })
+                    },
+
+                    fetchCompanyApplications() {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        fetch('http://127.0.0.1:5000/api/company/applications', {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        })
+                        .then(response => {
+                            if (!response.ok) throw new Error("Failed to load applicants.");
+                            return response.json();
+                        })
+                        .then(data => {
+                            this.applications = data.applications;
+                        })
+                        .catch(error => {
+                            console.error("Error fetching applications:", error);
+                        });
+                    },
+
+                    updateStatus(appId, targetStatus) {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        fetch(`http://127.0.0.1:5000/api/company/applications/${appId}/status`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({ status: targetStatus })
+                        })
+                        .then(response => {
+                            if (!response.ok) throw new Error("Could not update status.");
+                            return response.json();
+                        })
+                        .then(data => {
+                            alert(data.message);
+                            this.fetchCompanyApplications();
+                        })
+                        .catch(error => {
+                            console.error("Status Update Error:", error);
+                            alert(error.message);
+                        });
+                    },
+
+                    fetchStudentApplications() {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        fetch('http://127.0.0.1:5000/api/student/applications', {
+                            method: 'GET',
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            this.myApplications = data.my_applications;
+                        })
+                        .catch(error => console.error("Error loading application statuses:", error));
+                    },
+
+                    updateProfile() {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        fetch('http://127.0.0.1:5000/api/student/profile/update', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({
+                                full_name: this.profileName,
+                                cgpa: this.profileCgpa,
+                                stream: this.profileStream
+                            })
+                        })
+                        .then(response => {
+                            if (!response.ok) throw new Error("Failed to update profile details.");
+                            return response.json();
+                        })
+                        .then(data => {
+                            alert(data.message);
+                            this.fetchStudentApplications();
+                        })
+                        .catch(error => {
+                            console.error("Profile Error:", error);
+                            alert(error.message);
+                        });
+                    },
+
+                    deleteDrive(driveId) {
+                        if (!confirm("⚠️ Are you sure you want to permanently delete this recruitment campaign? This will also wipe all student applications associated with it.")) {
+                            return;
+                        }
+                        
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        fetch(`http://127.0.0.1:5000/api/company/drive/${driveId}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        })
+                        .then(response => {
+                            if (!response.ok) throw new Error("Failed to delete the campaign.");
+                            return response.json();
+                        })
+                        .then(data => {
+                            alert(data.message);
+                            this.fetchCompanyDashboard(token); 
+                        })
+                        .catch(error => {
+                            console.error("Delete Campaign Error:", error);
+                            alert(error.message);
+                        });
+                    },
+
+                    prepareEditDrive(drive) {
+                        this.isEditingDrive = true;
+                        this.editingDriveId = drive.id;
+                        this.newDrive.title = drive.title;
+                        this.newDrive.description = drive.description;
+                        this.newDrive.ctc = drive.ctc;
+                        this.newDrive.deadline = drive.deadline;
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    },
+
+                    saveDriveChanges() {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        fetch(`http://127.0.0.1:5000/api/company/drive/${this.editingDriveId}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify(this.newDrive)
+                        })
+                        .then(response => {
+                            if (!response.ok) throw new Error("Failed to save changes.");
+                            return response.json();
+                        })
+                        .then(data => {
+                            alert(data.message);
+                            this.isEditingDrive = false;
+                            this.editingDriveId = null;
+                            this.newDrive = { title: '', description: '', ctc: '', deadline: '', allowed_stream: 'All Streams', min_cgpa: '' };
+                            this.fetchCompanyDashboard(token);
+                        })
+                        .catch(error => alert(error.message));
+                    },
+
+                    uploadResume(event) {
+                        const file = event.target.files[0];
+                        if (!file) return;
+
+                        if (file.type !== "application/pdf") {
+                            alert("⚠️ Please upload PDF documents only!");
+                            return;
+                        }
+
+                        const token = localStorage.getItem('token');
+                        const formData = new FormData();
+                        formData.append('resume', file);
+
+                        fetch('http://127.0.0.1:5000/api/student/resume/upload', {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${token}` },
+                            body: formData
+                        })
+                        .then(response => {
+                            if (!response.ok) throw new Error("Upload transfer failed.");
+                            return response.json();
+                        })
+                        .then(data => {
+                            alert(data.message);
+                        })
+                        .catch(error => alert(error.message));
+                    },
+
+                    fetchStudentProfile(explicitToken = null) {
+                        const token = explicitToken || localStorage.getItem('token');
+                        if (!token) return;
+
+                        fetch('http://127.0.0.1:5000/api/student/profile', {
+                            method: 'GET',
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            this.profileName = data.full_name || '';
+                            this.profileCgpa = data.cgpa || '';
+                            this.profileStream = data.stream || 'Data Science';
+                        })
+                        .catch(error => console.error("Profile sync error:", error));
+                    },
+                    triggerHistoryExport() {
+                        const token = localStorage.getItem('token');
+                        if (!token) {
+                            alert("⚠️ You must be logged in to export history.");
+                            return;
+                        }
+
+                        fetch('http://127.0.0.1:5000/api/student/export-history', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            }
+                        })
+                        .then(response => {
+                            if (!response.ok) throw new Error("Could not queue backend job.");
+                            return response.json();
+                        })
+                        .then(data => {
+                            alert("🚀 Success!\n" + data.message + "\nTask Track ID: " + data.task_id);
+                        })
+                        .catch(error => alert("⚠️ Error: " + error.message));
+                    }
+                }
+            }).mount('#app');
+        </script>
+
+    </body>
+
+</html>
